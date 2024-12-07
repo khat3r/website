@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Minimalist To-Do List</title>
+<style>
+  :root {
+    --bg-color-start: #0B0B0B;
+    --bg-color-end: #050505;
+    --container-bg: #0D0D0D;
+    --column-bg: #111111;
+    --text-color: #FFFFFF;
+    --secondary-text: #B3B3B3;
+    --accent-color: #00B5AD;
+    --font-stack: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: var(--font-stack);
+    background: linear-gradient(to bottom, var(--bg-color-start) 0%, var(--bg-color-end) 100%);
+    color: var(--text-color);
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    font-size: 16px;
+    /* Subtle radial pattern hint for brand character */
+    background: radial-gradient(at center, rgba(255,255,255,0.02), transparent 80%), linear-gradient(to bottom, var(--bg-color-start) 0%, var(--bg-color-end) 100%);
+  }
+
+  header {
+    padding: 2rem 1rem 1.5rem;
+    text-align: center;
+  }
+
+  header h1 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 500;
+    letter-spacing: 0.4px;
+    line-height: 1.3;
+  }
+
+  header .date {
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--secondary-text);
+    font-weight: 300;
+  }
+
+  .container {
+    display: flex;
+    flex: 1;
+    padding: 2rem;
+    box-sizing: border-box;
+    gap: 2rem;
+    position: relative;
+  }
+
+  .goals-column {
+    background: var(--column-bg);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    transition: background 0.2s, box-shadow 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .goals-column:focus-within {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--accent-color);
+  }
+
+  .goals-column:hover {
+    background: #141414;
+  }
+
+  .column-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+    font-weight: 500;
+    color: var(--secondary-text);
+    margin-bottom: 1.5rem;
+    position: relative;
+    letter-spacing: 0.3px;
+  }
+
+  .column-header svg {
+    width: 16px;
+    height: 16px;
+    margin-right: 0.5rem;
+    stroke: var(--secondary-text);
+    fill: none;
+    stroke-width: 1.5;
+    opacity: 0.8;
+  }
+
+  .column-header:hover {
+    color: #fff;
+  }
+
+  .column-info {
+    text-align: center;
+    font-size: 0.9rem;
+    color: var(--secondary-text);
+    font-weight: 300;
+    margin-bottom: 1.5rem;
+    min-height: 1em;
+    transition: color 0.2s;
+  }
+
+  .column-info .progress-line {
+    width: 100%;
+    height: 2px;
+    background: #333;
+    position: relative;
+    margin-top: 0.5rem;
+    overflow: hidden;
+  }
+
+  .column-info .progress-line::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 2px;
+    background: var(--accent-color);
+    width: 0%;
+    transition: width 0.3s ease;
+  }
+
+  .task-container {
+    flex: 1;
+    overflow-y: auto;
+  }
+
+  .task-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .task-list li {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 0;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s, opacity 0.2s;
+    opacity: 0;
+    transform: translateY(10px);
+    animation: fadeInUp 0.3s forwards;
+  }
+
+  @keyframes fadeInUp {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .task-list li:hover {
+    background: #1a1a1a;
+  }
+
+  .checkbox {
+    width: 1.5rem;
+    height: 1.5rem;
+    border: 2px solid var(--secondary-text);
+    border-radius: 50%;
+    margin-right: 1rem;
+    position: relative;
+    transition: transform 0.2s ease, border-color 0.3s;
+    flex-shrink: 0;
+  }
+
+  .checkbox:hover {
+    transform: scale(1.05);
+  }
+
+  .checkbox.checked {
+    border-color: var(--accent-color);
+  }
+
+  .checkbox.checked::after {
+    content: "";
+    width: 0.75rem;
+    height: 0.75rem;
+    background: var(--accent-color);
+    border-radius: 50%;
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    transition: all 0.3s;
+  }
+
+  .task-text {
+    flex: 1;
+    color: var(--text-color);
+    transition: color 0.2s, opacity 0.2s;
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.4;
+  }
+
+  .task-text.completed {
+    text-decoration: line-through;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+  }
+
+  .task-text:hover {
+    color: #fff;
+  }
+
+  .empty-hint {
+    font-style: italic;
+    color: var(--secondary-text);
+    text-align: center;
+    margin-top: 2rem;
+    font-size: 0.9rem;
+    opacity: 0.7;
+  }
+
+  .add-task-container {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    display: flex;
+    align-items: center;
+    z-index: 100;
+  }
+
+  .add-task-input {
+    display: none;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--secondary-text);
+    color: var(--text-color);
+    padding: 0.5rem;
+    font-size: 1rem;
+    margin-right: 0.5rem;
+    width: 0;
+    opacity: 0;
+    transition: width 0.3s, opacity 0.3s;
+    font-weight: 300;
+  }
+
+  .add-task-input.show {
+    display: inline-block;
+    width: 180px;
+    opacity: 1;
+  }
+
+  .add-task-button {
+    background: var(--accent-color);
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: none;
+    color: #fff;
+    font-size: 2rem;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    transition: background 0.3s, transform 0.1s;
+    position: relative;
+  }
+
+  .add-task-button:hover {
+    background: #019890;
+    transform: scale(1.05);
+  }
+
+  .add-task-button:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--accent-color);
+  }
+
+  /* Focus States for Accessibility */
+  .goals-column:focus-within,
+  .add-task-button:focus {
+    outline: none;
+  }
+
+  /* Completed All Tasks Glow */
+  .goals-column.all-completed .column-header {
+    animation: completedGlow 1s ease;
+  }
+
+  @keyframes completedGlow {
+    0% { text-shadow: 0 0 0 var(--accent-color); }
+    50% { text-shadow: 0 0 8px var(--accent-color); }
+    100% { text-shadow: 0 0 0 var(--accent-color); }
+  }
+
+  @media (max-width: 900px) {
+    .container {
+      flex-direction: column;
+      gap: 1rem;
+    }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1 id="greeting">Good Afternoon, User</h1>
+  <div class="date" id="current-date"></div>
+</header>
+
+<div class="container">
+  <!-- Long Term Goals Column -->
+  <div class="goals-column" id="long-term-column" tabindex="0">
+    <div class="column-header" id="long-term-header">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>Long Term Goals</span>
+    </div>
+    <div class="column-info" id="long-term-info"></div>
+    <div class="task-container">
+      <ul class="task-list" id="long-term-list"></ul>
+      <div class="empty-hint" id="long-term-empty" style="display: none;">No tasks yet. Add one or drag here.</div>
+    </div>
+  </div>
+
+  <!-- Immediate Goals Column -->
+  <div class="goals-column" id="immediate-column" tabindex="0">
+    <div class="column-header" id="immediate-header">
+      <svg viewBox="0 0 24 24"><path d="M12 8v4l2 2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>Immediate Goals</span>
+    </div>
+    <div class="column-info" id="immediate-info"></div>
+    <div class="task-container">
+      <ul class="task-list" id="immediate-list"></ul>
+      <div class="empty-hint" id="immediate-empty" style="display: none;">No tasks yet. Add one or drag here.</div>
+    </div>
+  </div>
+
+  <!-- Short Term Goals Column -->
+  <div class="goals-column" id="short-term-column" tabindex="0">
+    <div class="column-header" id="short-term-header">
+      <svg viewBox="0 0 24 24"><path d="M13 2v5h5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>Short Term Goals</span>
+    </div>
+    <div class="column-info" id="short-term-info"></div>
+    <div class="task-container">
+      <ul class="task-list" id="short-term-list"></ul>
+      <div class="empty-hint" id="short-term-empty" style="display: none;">No tasks yet. Add one or drag here.</div>
+    </div>
+  </div>
+</div>
+
+<div class="add-task-container">
+  <input type="text" class="add-task-input" id="add-task-input" placeholder="Add a new task..."/>
+  <button class="add-task-button" id="add-task-button">+</button>
+</div>
+
+<script>
+  const greetingEl = document.getElementById("greeting");
+  const currentDateEl = document.getElementById("current-date");
+  const now = new Date();
+  const hours = now.getHours();
+  let greetingText;
+
+  if (hours < 12) greetingText = "Good Morning";
+  else if (hours < 18) greetingText = "Good Afternoon";
+  else greetingText = "Good Evening";
+
+  greetingEl.textContent = `${greetingText}, User`;
+  const dateOptions = { weekday: 'long', month: 'long', day: 'numeric' };
+  currentDateEl.textContent = now.toLocaleDateString(undefined, dateOptions);
+
+  let longTermTasks = JSON.parse(localStorage.getItem('longTermTasks')) || [];
+  let immediateTasks = JSON.parse(localStorage.getItem('immediateTasks')) || [];
+  let shortTermTasks = JSON.parse(localStorage.getItem('shortTermTasks')) || [];
+
+  const longTermList = document.getElementById('long-term-list');
+  const immediateList = document.getElementById('immediate-list');
+  const shortTermList = document.getElementById('short-term-list');
+
+  const longTermEmpty = document.getElementById('long-term-empty');
+  const immediateEmpty = document.getElementById('immediate-empty');
+  const shortTermEmpty = document.getElementById('short-term-empty');
+
+  const longTermInfo = document.getElementById('long-term-info');
+  const immediateInfo = document.getElementById('immediate-info');
+  const shortTermInfo = document.getElementById('short-term-info');
+
+  const addTaskBtn = document.getElementById("add-task-button");
+  const addTaskInput = document.getElementById("add-task-input");
+
+  let currentColumn = 'shortTerm'; 
+  let draggedTask = null;
+  let draggedFromColumn = null;
+
+  function updateColumnInfo(tasks, infoEl, columnEl) {
+    const total = tasks.length;
+    const completed = tasks.filter(t => t.completed).length;
+    infoEl.innerHTML = '';
+
+    columnEl.classList.remove('all-completed');
+    if (total > 0) {
+      const infoText = document.createElement('div');
+      infoText.textContent = `${total} Task${total === 1 ? '' : 's'}`;
+      infoEl.appendChild(infoText);
+
+      const progressLine = document.createElement('div');
+      progressLine.className = 'progress-line';
+      infoEl.appendChild(progressLine);
+
+      const percentage = total > 0 ? (completed / total) * 100 : 0;
+      progressLine.style.position = 'relative';
+      progressLine.style.overflow = 'hidden';
+      progressLine.querySelector(':after').style.width = percentage + '%';
+
+      if (completed === total && total > 0) {
+        // All tasks completed - show a gentle glow
+        columnEl.classList.add('all-completed');
+      }
+    } else {
+      // No tasks, no progress line
+    }
+  }
+
+  function animateCompletion(li, callback) {
+    // Gentle fade & scale when completed toggled
+    li.style.transition = 'transform 0.2s ease, opacity 0.2s ease';
+    li.style.transform = 'scale(0.98)';
+    li.style.opacity = '0.5';
+    setTimeout(() => {
+      callback();
+      li.style.transform = '';
+      li.style.opacity = '';
+    }, 200);
+  }
+
+  function renderTasks(tasks, ul, columnName, emptyHintEl, infoEl, columnEl) {
+    ul.innerHTML = '';
+    if (tasks.length === 0) {
+      emptyHintEl.style.display = 'block';
+    } else {
+      emptyHintEl.style.display = 'none';
+    }
+
+    tasks.forEach((task, index) => {
+      const li = document.createElement('li');
+
+      li.draggable = true;
+      li.addEventListener('dragstart', () => {
+        draggedTask = { task, index };
+        draggedFromColumn = columnName;
+      });
+
+      const checkbox = document.createElement('div');
+      checkbox.classList.add('checkbox');
+      if (task.completed) checkbox.classList.add('checked');
+
+      checkbox.addEventListener('click', (e) => {
+        e.stopPropagation();
+        task.completed = !task.completed;
+        saveTasks();
+        // Animate completion
+        animateCompletion(li, () => renderAllTasks());
+      });
+
+      const text = document.createElement('div');
+      text.classList.add('task-text');
+      text.textContent = task.text;
+      if (task.completed) {
+        text.classList.add('completed');
+      }
+
+      const removeBtn = document.createElement('button');
+      removeBtn.textContent = "✕";
+      removeBtn.style.background = 'none';
+      removeBtn.style.border = 'none';
+      removeBtn.style.color = 'var(--secondary-text)';
+      removeBtn.style.fontSize = '1rem';
+      removeBtn.style.cursor = 'pointer';
+      removeBtn.style.marginLeft = '1rem';
+      removeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        // On removal, animate out
+        li.style.transition = 'opacity 0.2s, transform 0.2s';
+        li.style.opacity = '0';
+        li.style.transform = 'translateY(10px)';
+        setTimeout(() => {
+          tasks.splice(index, 1);
+          saveTasks();
+          renderAllTasks();
+        }, 200);
+      });
+
+      li.appendChild(checkbox);
+      li.appendChild(text);
+      li.appendChild(removeBtn);
+      ul.appendChild(li);
+    });
+
+    updateColumnInfo(tasks, infoEl, columnEl);
+  }
+
+  function renderAllTasks() {
+    renderTasks(longTermTasks, longTermList, 'longTerm', longTermEmpty, longTermInfo, document.getElementById('long-term-column'));
+    renderTasks(immediateTasks, immediateList, 'immediate', immediateEmpty, immediateInfo, document.getElementById('immediate-column'));
+    renderTasks(shortTermTasks, shortTermList, 'shortTerm', shortTermEmpty, shortTermInfo, document.getElementById('short-term-column'));
+  }
+
+  function saveTasks() {
+    localStorage.setItem('longTermTasks', JSON.stringify(longTermTasks));
+    localStorage.setItem('immediateTasks', JSON.stringify(immediateTasks));
+    localStorage.setItem('shortTermTasks', JSON.stringify(shortTermTasks));
+  }
+
+  addTaskBtn.addEventListener('click', () => {
+    if (!addTaskInput.classList.contains('show')) {
+      addTaskInput.classList.add('show');
+      addTaskInput.focus();
+    } else {
+      const text = addTaskInput.value.trim();
+      if (text) {
+        let targetArray;
+        if (currentColumn === 'longTerm') targetArray = longTermTasks;
+        else if (currentColumn === 'immediate') targetArray = immediateTasks;
+        else targetArray = shortTermTasks;
+
+        targetArray.push({ text, completed: false });
+        saveTasks();
+        renderAllTasks();
+        addTaskInput.value = '';
+        addTaskInput.classList.remove('show');
+      } else {
+        addTaskInput.classList.remove('show');
+      }
+    }
+  });
+
+  addTaskInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      const text = addTaskInput.value.trim();
+      if (text) {
+        let targetArray;
+        if (currentColumn === 'longTerm') targetArray = longTermTasks;
+        else if (currentColumn === 'immediate') targetArray = immediateTasks;
+        else targetArray = shortTermTasks;
+
+        targetArray.push({ text, completed: false });
+        saveTasks();
+        renderAllTasks();
+      }
+      addTaskInput.value = '';
+      addTaskInput.classList.remove('show');
+    }
+  });
+
+  const columns = {
+    longTerm: document.getElementById('long-term-column'),
+    immediate: document.getElementById('immediate-column'),
+    shortTerm: document.getElementById('short-term-column')
+  };
+
+  Object.keys(columns).forEach((col) => {
+    const columnEl = columns[col];
+
+    columnEl.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      columnEl.style.transform = 'scale(1.01)';
+    });
+
+    columnEl.addEventListener('dragenter', (e) => {
+      e.preventDefault();
+    });
+
+    columnEl.addEventListener('dragleave', () => {
+      columnEl.style.transform = 'scale(1)';
+    });
+
+    columnEl.addEventListener('drop', () => {
+      columnEl.style.transform = 'scale(1)';
+      if (draggedTask && draggedFromColumn !== col) {
+        let fromArr;
+        if (draggedFromColumn === 'longTerm') fromArr = longTermTasks;
+        else if (draggedFromColumn === 'immediate') fromArr = immediateTasks;
+        else fromArr = shortTermTasks;
+
+        let toArr;
+        if (col === 'longTerm') toArr = longTermTasks;
+        else if (col === 'immediate') toArr = immediateTasks;
+        else toArr = shortTermTasks;
+
+        const { task, index } = draggedTask;
+        fromArr.splice(index, 1);
+        toArr.push(task);
+
+        saveTasks();
+        renderAllTasks();
+      }
+      draggedTask = null;
+      draggedFromColumn = null;
+    });
+  });
+
+  // Initial render
+  renderAllTasks();
+</script>
+</body>
+</html>
